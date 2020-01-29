@@ -26,4 +26,13 @@ typedef struct{
    int32_t index;
 }peakPoint;
 
+typedef struct{
+    unsigned int sh;
+    unsigned int sm;
+    unsigned int ss;
+    unsigned int eh;
+    unsigned int em;
+    unsigned int es;
+}Time;
+
 #endif  //_STRUCT_H_

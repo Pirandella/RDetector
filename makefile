@@ -1,6 +1,6 @@
 CC := gcc
 TARGET := RDetector
-CFLAGS = -std=c99 -I $(IDIR)
+CFLAGS = -std=c99 -I $(IDIR) -Wall -g
 
 ODIR := ./obj
 SDIR := ./src
