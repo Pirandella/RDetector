@@ -54,8 +54,20 @@ opt *parseArgs(int argc, char **argv){
                 args->flag |= FS_FLAG;
                 break;
             case 'h':
-                puts("-s:\t Address of the ECG file.");
-                puts("-a:\t QRS algorithm\n\t\t\"pt\" - Pan Tompkins algorithm\n\t\t\"hc\" - Hc Chen algorithm");
+                puts("\t\t\t[R D E T E C T O R]\nMain purpose of this prorgam is to finde R peaks in ECG file and extract usful data.");
+                puts("[Input arguments]\n\t-s:\t Address of the ECG file.");
+                puts("\t-a:\t QRS algorithm\n\t\t\"pt\" - Pan Tompkins algorithm\n\t\t\"hc\" - Hc Chen algorithm");
+                puts("\t-t:\t External file with aFib time codes. If it's not specified then there must be a \"timeCodes.txt\" file in directory with ECG file");
+                puts("\t-c:\t Process ECG file and convert output data in hdf5 format to plot it");
+                puts("\t-e:\t Convert already existing file. (Used in combintion with -c)");
+                puts("\t-p:\t Plot data");
+                puts("\t-f:\t Set sampling frequency of ECG (Not in use for now)");
+                puts("\t-h:\t Help)");
+                puts("[Example]:\n\tRDetector -s [ECG file] -a hc -f 128\n\t\tOutput only result files like QRS & RR no PLT");
+                puts("\tRDetector -c -s [ECG file] -a hc -f 128\n\t\tOutput QRS & RR files and convet QRS to hdf5");
+                puts("\tRDetector -ce -s [QRS file]\n\t\tConvet already existing QRS file");
+                puts("\tRDetector -p -s [PLT file]\n\t\tPlot already exising file");
+                puts("\tRDetector -cp -s [ECG file]\n\t\tOutput QRS & RR file convet it to hdf5 and plot it");
                 free(args);
                 exit(0);
             default:
