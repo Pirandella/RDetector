@@ -141,12 +141,14 @@ opt *parseArgs(int argc, char **argv){
 
     args->qrsFile = malloc(sizeof(char) * 255);
     args->pltFile = malloc(sizeof(char) * 255);
+    args->rrFile = malloc(sizeof(char) * 255);
     if(args->flag & INT_TF_FLAG){
         args->timeFile = malloc(sizeof(char) * 255);
         memset(args->timeFile, 0, 255);
     }
     memset(args->qrsFile, 0, 255);
     memset(args->pltFile, 0, 255);
+    memset(args->rrFile, 0, 255);
 
     strncat(args->qrsFile, args->ecgFile, (strrchr(args->ecgFile, '.') - args->ecgFile));
     strncat(args->pltFile, args->ecgFile, (strrchr(args->ecgFile, '.') - args->ecgFile));
@@ -155,12 +157,16 @@ opt *parseArgs(int argc, char **argv){
         strcat(args->timeFile, "/timeCodes.txt\0");
         printf("%s\n", args->timeFile);
     }
+    strncat(args->rrFile, args->ecgFile, (strrchr(args->ecgFile, '.') - args->ecgFile));
+
     if(args->algorithm == 0){
         strcat(args->qrsFile, "_QRS_PanTompkins.txt\0");
         strcat(args->pltFile, "_PLT_PanTompkins.hdf5\0");
+        strcat(args->rrFile, "_RR_PanTompkins.txt\0");
     }else if(args->algorithm == 1){
         strcat(args->qrsFile, "_QRS_HcChen.txt\0");
         strcat(args->pltFile, "_PLT_HcChen.hdf5\0");
+        strcat(args->rrFile, "_RR_HcChen.txt\0");
     }
 
     // Parse time codes
@@ -194,17 +200,18 @@ opt *parseArgs(int argc, char **argv){
     args->timeCode = malloc(sizeof(Time) * i);
     i = 0;
     while(!feof(timeFile)){
+        // Cheak if line is commented
         if(fgetc(timeFile) == '#'){
             while(fgetc(timeFile) != '\n');
             continue;
         }
         fseek(timeFile, -1, SEEK_CUR);
         fscanf(timeFile, "%d:%d:%d/%d:%d:%d\n", &args->timeCode[i].sh, &args->timeCode[i].sm, &args->timeCode[i].ss, &args->timeCode[i].eh, &args->timeCode[i].em, &args->timeCode[i].es);
-        printf("%d:%d:%d/%d:%d:%d\n", args->timeCode[i].sh, args->timeCode[i].sm, args->timeCode[i].ss, args->timeCode[i].eh, args->timeCode[i].em, args->timeCode[i].es);
+        // printf("%d:%d:%d/%d:%d:%d\n", args->timeCode[i].sh, args->timeCode[i].sm, args->timeCode[i].ss, args->timeCode[i].eh, args->timeCode[i].em, args->timeCode[i].es);
         i++;
     }
     args->nTime = i;
-    printf("%d\n", i);
+    // printf("%d\n", i);
     fclose(timeFile);
 
     return args;

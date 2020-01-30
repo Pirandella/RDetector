@@ -23,6 +23,7 @@ typedef struct{
     char *qrsFile;
     char *pltFile;
     char *timeFile;
+    char *rrFile;
     uint8_t algorithm;
     uint16_t fs;
     uint16_t flag;
