@@ -9,10 +9,10 @@
 
 #define SAMPLING_RATE       128
 
-int lowPassFilter(int data);
-int highPassFilter(int data);
-int derivative(int data);
-int square(int data);
-int movingWindowIntegral(int data);
-peakPoint panTompkins(int sample, float value, int bandpass, int square, int integral);
+float lowPassFilter(float data);
+float highPassFilter(float data);
+float derivative(float data);
+float square(float data);
+float movingWindowIntegral(float data);
+peakPoint panTompkins(int sample, float value, float bandpass, float square, float integral);
 #endif  // _QRS_H_

@@ -1,77 +1,80 @@
 #include "panTompkins.h"
 
-int lowPassFilter(int data){
-   static int y1 = 0, y2 = 0, x[26], n = 12;
-   int y0;
+float lowPassFilter(float data){
+   static float y1 = 0, y2 = 0, x[26];
+   static int n = 12;
+   float y0;
 
    x[n] = x[n + 13] = data;
-   y0 = (y1 << 1) - y2 + x[n] - (x[n + 6] << 1) + x[n + 12];
+   y0 = (y1 * 2) - y2 + x[n] - (x[n + 6] * 2) + x[n + 12];
    y2 = y1;
    y1 = y0;
-   y0 >>= 5;
+   y0 *= 0.03125;
    if(--n < 0) n = 12;
 
    return y0;
 }
 
-int highPassFilter(int data){
-    static int y1 = 0, x[66], n = 32;
-    int y0;
+float highPassFilter(float data){
+    static float y1 = 0, x[66];
+    static int n = 32;
+    float y0;
 
     x[n] = x[n + 33] = data;
     y0 = y1 + x[n] - x[n + 32];
     y1 = y0;
     if(--n < 0) n = 32;
 
-    return (x[n + 16] - (y0 >> 5));
+    return (x[n + 16] - (y0 * 0.03125));
 }
 
-int derivative(int data){
-    static int x_derv[4];
-    int y;
+float derivative(float data){
+    static float x_derv[4];
+    float y;
 
-    y = (data << 1) + x_derv[3] - x_derv[1] - ( x_derv[0] << 1);
-    y >>= 3;
+    y = (data * 2) + x_derv[3] - x_derv[1] - ( x_derv[0] * 2);
+    y *= 0.125;
     for(int i = 0; i < 3; ++i) x_derv[i] = x_derv[i + 1];
     x_derv[3] = data;
 
     return y;
 }
 
-int square(int data){
+float square(float data){
    return (data * data);
 }
 
-int movingWindowIntegral(int data) {
-   static const int WINDOW_SIZE = SAMPLING_RATE * 0.4;
-   static int x[WINDOW_SIZE], ptr = 0;
-   static long sum = 0;
-   long ly;
-   int y;
+float movingWindowIntegral(float data) {
+   static const int WINDOW_SIZE = SAMPLING_RATE * 0.05;
+   static float x[WINDOW_SIZE];
+   static int ptr = 0;
+   static float sum = 0;
+   float ly;
+   float y;
 
    if(++ptr == WINDOW_SIZE) ptr = 0;
    sum -= x[ptr];
    sum += data;
    x[ptr] = data;
-   ly = sum >> 5;
-   uint32_t MAX_INTEGRAL = 4096; // 4096
+   ly = sum * 0.03125;
+   uint32_t MAX_INTEGRAL = 32000; // 4096
    if(ly > MAX_INTEGRAL) y = MAX_INTEGRAL;
-   else y = (int)ly;
+   else y = ly;
 
    return (y);
 }
 
-peakPoint panTompkins(int sample, float value, int bandpass, int square, int integral){
+peakPoint panTompkins(int sample, float value, float bandpass, float square, float integral){
     static const int QRS_TIME = SAMPLING_RATE * 0.1;
     static const int SEARCH_BACK_TIME = SAMPLING_RATE * 1.66f;
 
-    static int bandpass_buffer[SEARCH_BACK_TIME],integral_buffer[SEARCH_BACK_TIME];
+    static float bandpass_buffer[SEARCH_BACK_TIME],integral_buffer[SEARCH_BACK_TIME];
     static peakPoint peak_buffer[SEARCH_BACK_TIME];
-    static int square_buffer[QRS_TIME];
+    static float square_buffer[QRS_TIME];
     static long unsigned last_qrs = 0, last_slope = 0, current_slope = 0;
-    static int peak_i = 0, peak_f = 0, threshold_i1 = 0, threshold_i2 = 0, threshold_f1 = 0, threshold_f2 = 0, spk_i = 0, spk_f = 0, npk_i = 0, npk_f = 0;
+    static float peak_i = 0, peak_f = 0, threshold_i1 = 0, threshold_i2 = 0, threshold_f1 = 0, threshold_f2 = 0, spk_i = 0, spk_f = 0, npk_i = 0, npk_f = 0;
     static bool qrs, regular = true, prev_regular;
-    static int rr1[8] = {0}, rr2[8] = {0}, rravg1, rravg2, rrlow = 0, rrhigh = 0, rrmiss = 0;
+    static float rr1[8] = {0}, rr2[8] = {0}, rravg1, rravg2, rrlow = 0, rrhigh = 0, rrmiss = 0;
 
     peakPoint result;
     result.index = 0;
@@ -96,7 +99,7 @@ peakPoint panTompkins(int sample, float value, int bandpass, int square, int int
             if(sample <= last_qrs + (long unsigned int)(0.36 * SAMPLING_RATE)){
                 // The squared slope is "M" shaped. So we have to check nearby samples to make sure we're really looking
                 // at its peak value, rather than a low one.
-                int current = sample;
+                float current = sample;
                 current_slope = 0;
                 for(int j = current - QRS_TIME; j <= current; ++j)
                     if(square_buffer[j % QRS_TIME] > current_slope) current_slope = square_buffer[j % QRS_TIME];
@@ -120,7 +123,7 @@ peakPoint panTompkins(int sample, float value, int bandpass, int square, int int
                 }
             }else{
                 // If it was above both thresholds and respects both latency periods, it certainly is a R peak.
-                int current = sample;
+                float current = sample;
                 current_slope = 0;
                 for(int j = current - QRS_TIME; j <= current; ++j){
                     if(square_buffer[j % QRS_TIME] > current_slope) current_slope = square_buffer[j % QRS_TIME];
@@ -198,7 +201,7 @@ peakPoint panTompkins(int sample, float value, int bandpass, int square, int int
         }
     }else{
         // If no R-peak was detected, it's important to check how long it's been since the last detection.
-        int current = sample;
+        float current = sample;
         // If no R-peak was detected for too long, use the lighter thresholds and do a back search.
         // However, the back search must respect the 200ms limit and the 360ms one (check the slope).
         if((sample - last_qrs > (long unsigned int)rrmiss) && (sample > last_qrs + SAMPLING_RATE * 0.2f)){

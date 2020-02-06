@@ -14,11 +14,11 @@ typedef struct{
 }ecgData;
 
 typedef struct{
-    int lowPass;
-    int highPass;
-    int derivative;
-    int square;
-    int movingWindowIntegral;
+    float lowPass;
+    float highPass;
+    float derivative;
+    float square;
+    float movingWindowIntegral;
 }QRS_Filter;
 
 typedef struct{
