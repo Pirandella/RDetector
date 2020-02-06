@@ -9,8 +9,6 @@
 #include "panTompkins.h"
 #include "hcChen.h"
 
-#define DELTA(a, b) ((a > b) ? (a - b) : (b - a))
-
 int main(int argc, char **argv){
 
     opt *args = malloc(sizeof(opt));
@@ -20,10 +18,18 @@ int main(int argc, char **argv){
     QRS_Filter *qrs = malloc(sizeof(QRS_Filter));
     peakPoint peak;
     int globalIndex = 0;
+    int localIndex = 0;
     int peakCount = 0;
     int aFibKnown = 0;
     int aFibFound = 0;
     int aFibFlag = 0;
+
+    int i = 0;
+    unsigned int r1 = 0;
+    float rr = 0;
+    int aFibStartTime = 0;
+    int aFibEndTime = 0;
+
     FILE *ecgFile;
     FILE *qrsFile;
     FILE *rrFile;
@@ -58,13 +64,11 @@ int main(int argc, char **argv){
             exit(1);
         }
 
-        fgets(tmpBuff, 100, ecgFile);
+        fgets(tmpBuff, 100, ecgFile); // Read table title line
 
-        int i = 0;
-        unsigned int r1 = 0;
-        float rr = 0;
-        int aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
-        int aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
+        aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
+        aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
+        peak.value = 0.0;
         while(!feof(ecgFile)){
             fscanf(ecgFile, "%d.%d.%d\t%d\t%d\t%f\t%f\t%f\t%f\n", &ecg->year, &ecg->month, &ecg->day, &ecg->hours, &ecg->minutes, &ecg->seconds, &ecg->ch0, &ecg->ch1, &ecg->ch2);
             switch(args->algorithm){
@@ -78,21 +82,18 @@ int main(int argc, char **argv){
                     if(peak.value < 0) peak.value = 0.0;
                     break;
                 case 1:
-                    // qrs->lowPass = lowPassFilter(ecg->ch0);
-                    // qrs->highPass = highPassFilter(qrs->lowPass);
-                    // peak.index = HC_Chen_detect(qrs->highPass);
                     peak.index = HC_Chen_detect(ecg->ch0);
                     if(peak.index == 1){
                         peak.index = globalIndex;
                         peak.value = ecg->ch0;
                     }else{
-                        //peak.index = 0;
                         peak.value = 0.0;
                     }
                     break;
             }
 
             if(peak.index > 0){
+                peak.value = ecg->ch0;
                 int fileTimeSec = (ecg->hours * 3600) + (ecg->minutes * 60) + (int)ecg->seconds;
                 if(aFibFlag != 2){
                     if((fileTimeSec >= aFibStartTime) && (fileTimeSec <= aFibEndTime)){
@@ -118,15 +119,17 @@ int main(int argc, char **argv){
                     }
                 }
 
-                rr = DELTA(globalIndex, r1);
-                r1 = globalIndex;
-                rr /= 128;
+                rr = fabsf(rr - localIndex) * 0.0078125;
+                r1 = localIndex;
+                localIndex = 0;
+                // rr = (globalIndex - r1) * 0.0078125;
+                // r1 = globalIndex;
 
                 fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
             }
-            fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.value ? (++peakCount) : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
-
+            fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
             globalIndex++;
+            localIndex++;
         }
 
         fclose(ecgFile);

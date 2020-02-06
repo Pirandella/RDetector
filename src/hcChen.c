@@ -87,10 +87,12 @@ bool HC_Chen_detect(float signal){
    if(win_idx++ >= window_size){
       // weighting factor for determining the contribution of
       // the current peak value to the threshold adjustment
-      float gamma = (0.2f+0.15f)/2.0f; // 0.15~0.2
+      float gamma = 0.2;
+      //float gamma = (0.2f + 0.15f) / 2.0f; // 0.15 ~ 0.2
       // forgetting factor -
       // rate at which we forget old observations
-      float alpha = 0.01f + ( ((float) rand() / (float) RAND_MAX) * ((0.1f - 0.01f))); // 0~1
+      float alpha = 0.05;
+      // float alpha = 0.01f + ( ((float) rand() / (float) RAND_MAX) * ((0.1f - 0.01f))); // 0~1
       //float alpha = 1.0f*exp(-0.00005f*(sample - last_qrs_point));
       treshold = alpha * gamma * win_max + (1.0f - alpha) * treshold;
       // reset current window ind
