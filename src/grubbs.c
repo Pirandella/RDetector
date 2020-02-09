@@ -44,7 +44,7 @@ int grubbs(float *value, int n, int k){
     for(i = 0; i < n; i++) sum += value[i];
     mean = sum / n;
     for(i = 0; i < n; i++) s += (value[i] - mean) * (value[i] - mean);
-    s = sqrt(s / n);
+    s = sqrt(s / (n - 1));
 
     for(i = 0; i < k; i++){
         max = _max(value, n);
