@@ -8,6 +8,7 @@
 #include "struct.h"
 #include "panTompkins.h"
 #include "hcChen.h"
+#include "grubbs.h"
 
 int main(int argc, char **argv){
 
@@ -27,6 +28,7 @@ int main(int argc, char **argv){
     int i = 0;
     unsigned int r1 = 0;
     float rr = 0;
+    int rrIndex = 0;
     int aFibStartTime = 0;
     int aFibEndTime = 0;
 
@@ -66,6 +68,9 @@ int main(int argc, char **argv){
 
         fgets(tmpBuff, 100, ecgFile); // Read table title line
 
+        // temporary rrBuffer
+        float tmpBuffer[DATASET_SIZE];
+
         aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
         aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
         peak.value = 0.0;
@@ -97,8 +102,8 @@ int main(int argc, char **argv){
                 int fileTimeSec = (ecg->hours * 3600) + (ecg->minutes * 60) + (int)ecg->seconds;
                 if(aFibFlag != 2){
                     if((fileTimeSec >= aFibStartTime) && (fileTimeSec <= aFibEndTime)){
-                        printf("\b%c[2K%d:%d:%f\r", 27, ecg->hours, ecg->minutes, ecg->seconds);
-                        fflush(stdout);
+                        //printf("\b%c[2K%d:%d:%f\r", 27, ecg->hours, ecg->minutes, ecg->seconds);
+                        // fflush(stdout);
                         aFibFlag = 1;
                         aFibKnown = 1;
                     }else if((fileTimeSec > aFibEndTime) && (aFibFlag == 1)){
@@ -122,10 +127,22 @@ int main(int argc, char **argv){
                 rr = fabsf(rr - localIndex) * 0.0078125;
                 r1 = localIndex;
                 localIndex = 0;
-                // rr = (globalIndex - r1) * 0.0078125;
-                // r1 = globalIndex;
 
-                fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
+                if(rrIndex > DATASET_SIZE){
+                    int g = grubbs(tmpBuffer, DATASET_SIZE, 24);
+                    // int g = outliner(tmpBuffer, DATASET_SIZE);
+                    g = outliner(tmpBuffer, g);
+                    for(int k = 0; k < g; k++){
+                        if((tmpBuffer[k] > 0.375) && (tmpBuffer[k] < 1.38))
+                            fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, tmpBuffer[k], aFibKnown);
+                    }
+                    rrIndex = 0;
+                }else{
+                    // if((rr > 0.35) && (rr < 1.4))
+                        tmpBuffer[rrIndex++] = rr;
+                }
+
+                //fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
             }
             fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
             globalIndex++;
