@@ -130,7 +130,6 @@ int main(int argc, char **argv){
 
                 if(rrIndex > DATASET_SIZE){
                     int g = grubbs(tmpBuffer, DATASET_SIZE, 24);
-                    // int g = outliner(tmpBuffer, DATASET_SIZE);
                     g = outliner(tmpBuffer, g);
                     for(int k = 0; k < g; k++){
                         if((tmpBuffer[k] > 0.375) && (tmpBuffer[k] < 1.38))

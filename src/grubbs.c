@@ -41,12 +41,12 @@ int grubbs(float *value, int n, int k){
 
     int i, df, maxIndex;
 
-    for(i = 0; i < n; i++) sum += value[i];
-    mean = sum / n;
-    for(i = 0; i < n; i++) s += (value[i] - mean) * (value[i] - mean);
-    s = sqrt(s / (n - 1));
-
     for(i = 0; i < k; i++){
+        for(i = 0; i < n; i++) sum += value[i];
+        mean = sum / n;
+        for(i = 0; i < n; i++) s += (value[i] - mean) * (value[i] - mean);
+        s = sqrt(s / (n - 1));
+
         max = _max(value, n);
         min = _min(value, n);
         maxIndex = _maxIndex(value, n);
@@ -72,6 +72,14 @@ int grubbs(float *value, int n, int k){
     return n;
 }
 
+//---------------- Sorting function --------------------------------------------
+
+static int cmp (const void *a, const void *b) {
+   return (*(int *)a - *(int *)b);
+}
+
+//------------------------------------------------------------------------------
+
 static float quartiles(const float *value, int n, int q){
     int index = n / 4;
     float res = 0;
@@ -93,26 +101,23 @@ static float quartiles(const float *value, int n, int q){
 }
 
 int outliner(float *value, int n){
+    float data[n];
     float q1, q3, iqr;
     float upperBound, lowerBound;
     int outIndex[n];
-
     int j = 0;
+
+    // Copy data from one array to another
+    for(int i = 0; i < n; i++) data[i] = value[i];
+    // Sort data for quartiles function
+    qsort(data, n, sizeof(float), cmp);
 
     q1 = quartiles(value, n, 1);
     q3 = quartiles(value, n, 3);
-    iqr = (q1 > q3) ? (q1 - q3) : (q3 - q1);
-    upperBound = (q1 > q3) ? q1 : q3 + (1.5 * iqr);
-    lowerBound = (q1 < q3) ? q1 : q3 - (1.5 * iqr);
-    // printf("Q1: %f\tQ3: %f\tIQR: %f\tUB: %f\tLB: %f\n", q1, q3, iqr, upperBound, lowerBound);
+    iqr = q3 - q1;
+    upperBound = q3 + (1.5 * iqr);
+    lowerBound = q1 - (1.5 * iqr);
     for(int i = 0; i < n; i++){
-        // if(value[i] > upperBound){
-        //     // printf("upperBound outliner: %f\n", value[i]);
-        //     upperIndex[j++] = i;
-        // }else if(value[i] < lowerBound){
-        //     // printf("lowerBound outliner: %f\n", value[i]);
-        //     lowerIndex[k++] = i;
-        // }
         if((value[i] > upperBound) || (value[i] < lowerBound)){
             outIndex[j++] = i;
         }
@@ -122,9 +127,6 @@ int outliner(float *value, int n){
         for(int k = outIndex[i]; k < n; k++) value[k] = value[k + 1];
         --n;
     }
-
-    // for(i = 0; i < n; i++) printf("%f\t", value[i]);
-    // puts(" ");
 
     return n;
 }
