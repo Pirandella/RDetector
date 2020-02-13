@@ -7,7 +7,7 @@
 
 #include "struct.h"
 
-#define SAMPLING_RATE       128
+#define SAMPLING_RATE   128
 
 float lowPassFilter(float data);
 float highPassFilter(float data);

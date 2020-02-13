@@ -102,8 +102,8 @@ int main(int argc, char **argv){
                 int fileTimeSec = (ecg->hours * 3600) + (ecg->minutes * 60) + (int)ecg->seconds;
                 if(aFibFlag != 2){
                     if((fileTimeSec >= aFibStartTime) && (fileTimeSec <= aFibEndTime)){
-                        //printf("\b%c[2K%d:%d:%f\r", 27, ecg->hours, ecg->minutes, ecg->seconds);
-                        // fflush(stdout);
+                        printf("\b%c[2K%d:%d:%f\r", 27, ecg->hours, ecg->minutes, ecg->seconds);
+                        fflush(stdout);
                         aFibFlag = 1;
                         aFibKnown = 1;
                     }else if((fileTimeSec > aFibEndTime) && (aFibFlag == 1)){
@@ -137,7 +137,6 @@ int main(int argc, char **argv){
                     }
                     rrIndex = 0;
                 }else{
-                    // if((rr > 0.35) && (rr < 1.4))
                         tmpBuffer[rrIndex++] = rr;
                 }
 

@@ -11,7 +11,7 @@
 static const uint32_t M = 6;
 static const uint32_t N = SAMPLING_RATE * 0.15; // 0.15f;
 static const uint32_t  window_size = SAMPLING_RATE * 0.55; // 0.45 - Works preaty good
-static const float HP_CONSTANT = ((float) 1.0f / (float) M);
+static const float HP_CONSTANT = ((float)1.0f / (float)M);
 // circular buffer for input ecg signal
 // we need to keep a history of M + 1 samples for HP filter
 static float ecg_buff[M + 1] = {0};
