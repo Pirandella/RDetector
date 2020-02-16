@@ -181,7 +181,7 @@ opt *parseArgs(int argc, char **argv){
         strcat(args->rrFile, "_RR_HcChen.txt\0");
     }
 
-    // Parse time codes
+//------------------------ Parse time codes ------------------------------------
     FILE *timeFile = fopen(args->timeFile, "r");
     if(timeFile == NULL){
         perror("Time code file error:");

@@ -26,11 +26,13 @@ int main(int argc, char **argv){
     int aFibFlag = 0;
 
     int i = 0;
-    unsigned int r1 = 0;
     float rr = 0;
+    uint8_t firstR = 0;
     int rrIndex = 0;
     int aFibStartTime = 0;
     int aFibEndTime = 0;
+    float rrIntervalBuffer[DATASET_SIZE];
+    rrTime *rrTimeBuffer = malloc(sizeof(rrTime) * DATASET_SIZE);
 
     FILE *ecgFile;
     FILE *qrsFile;
@@ -68,11 +70,9 @@ int main(int argc, char **argv){
 
         fgets(tmpBuff, 100, ecgFile); // Read table title line
 
-        // temporary rrBuffer
-        float tmpBuffer[DATASET_SIZE];
-
         aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
         aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
+        printf("\x1B[33mFirst time interval: %02d:%02d:%02d->%02d:%02d:%02d\x1B[0m\n", args->timeCode[i].sh, args->timeCode[i].sm, args->timeCode[i].ss, args->timeCode[i].eh, args->timeCode[i].em, args->timeCode[i].es);
         peak.value = 0.0;
         while(!feof(ecgFile)){
             fscanf(ecgFile, "%d.%d.%d\t%d\t%d\t%f\t%f\t%f\t%f\n", &ecg->year, &ecg->month, &ecg->day, &ecg->hours, &ecg->minutes, &ecg->seconds, &ecg->ch0, &ecg->ch1, &ecg->ch2);
@@ -124,27 +124,32 @@ int main(int argc, char **argv){
                     }
                 }
 
-                rr = fabsf(rr - localIndex) * 0.0078125;
-                r1 = localIndex;
+                firstR = 1;
+                rr = localIndex * 0.0078125;
                 localIndex = 0;
 
-                if(rrIndex > DATASET_SIZE){
-                    int g = grubbs(tmpBuffer, DATASET_SIZE, 24);
-                    g = outliner(tmpBuffer, g);
+                if(rrIndex == DATASET_SIZE){
+                    int g = grubbs(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE, 16);
+                    g = grubbs(rrIntervalBuffer, rrTimeBuffer, g, g / 2);
+                    // g = outliner(rrIntervalBuffer, rrTimeBuffer, g);
                     for(int k = 0; k < g; k++){
-                        if((tmpBuffer[k] > 0.375) && (tmpBuffer[k] < 1.38))
-                            fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, tmpBuffer[k], aFibKnown);
+                        if((rrIntervalBuffer[k] > 0.3) && (rrIntervalBuffer[k] < 1.4))
+                            fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", rrTimeBuffer[k].h, rrTimeBuffer[k].m, rrTimeBuffer[k].s, rrIntervalBuffer[k], aFibKnown);
                     }
                     rrIndex = 0;
                 }else{
-                        tmpBuffer[rrIndex++] = rr;
+                        rrIntervalBuffer[rrIndex] = rr;
+                        rrTimeBuffer[rrIndex].h = ecg->hours;
+                        rrTimeBuffer[rrIndex].m = ecg->minutes;
+                        rrTimeBuffer[rrIndex].s = ecg->seconds;
+                        rrIndex++;
                 }
 
-                //fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
+                // fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
             }
             fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
             globalIndex++;
-            localIndex++;
+            if(firstR) localIndex++;
         }
 
         fclose(ecgFile);

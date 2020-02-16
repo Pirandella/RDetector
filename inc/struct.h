@@ -35,4 +35,10 @@ typedef struct{
     unsigned int es;
 }Time;
 
+typedef struct{
+    unsigned int h;
+    unsigned int m;
+    float s;
+}rrTime;
+
 #endif  //_STRUCT_H_

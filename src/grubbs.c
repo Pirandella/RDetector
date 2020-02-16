@@ -33,25 +33,26 @@ static int _maxIndex(const float value[], int n){
 // float *value - Dataset
 // int n - Number of points in dataset
 // int k - Possible number of outliners in the dataset
-int grubbs(float *value, int n, int k){
+int grubbs(float *value, rrTime *time, int n, int k){
 
     float sum = 0.0, mean = 0.0, s = 0.0;
     float max, min, maxMean, minMean;
     float g, gCrit;
 
     int i, df, maxIndex;
+    int p;
 
     for(i = 0; i < k; i++){
-        for(i = 0; i < n; i++) sum += value[i];
+        for(p = 0; p < n; p++) sum += value[p];
         mean = sum / n;
-        for(i = 0; i < n; i++) s += (value[i] - mean) * (value[i] - mean);
+        for(p = 0; p < n; p++) s += (value[p] - mean) * (value[p] - mean);
         s = sqrt(s / (n - 1));
 
         max = _max(value, n);
         min = _min(value, n);
         maxIndex = _maxIndex(value, n);
-        maxMean = max - mean;
-        minMean = mean - min;
+        minMean = max - mean;
+        maxMean = mean - min;
         g = ((maxMean > minMean) ? maxMean : minMean) / s;
         df = n - 1;
         gCrit = (n - 1) * t[df] / sqrt(n * ((n - 1) + pow(t[df], 2)));
@@ -60,10 +61,14 @@ int grubbs(float *value, int n, int k){
         // printf("g: %f\t t: %f\tgCrit: %f\t Sig: %d\tOutlier: %f\t N: %d", g, t[df], gCrit, (g > gCrit) ? 1 : 0, max, n);
         // Delete oulier element
         if(g > gCrit){
-            for(int j = maxIndex; j < n; j++)
+            for(int j = maxIndex; j < n; j++){
                 value[j] = value[j + 1];
+                time[j] = time[j + 1];
+            }
             n--;
         }
+        s = 0;
+        sum = 0;
         // puts(" ");
         //for(int l = 0; l < n; l++) printf("%f\t", value[l]);
         // puts(" ");
@@ -100,7 +105,7 @@ static float quartiles(const float *value, int n, int q){
     return res;
 }
 
-int outliner(float *value, int n){
+int outliner(float *value, rrTime *time, int n){
     float data[n];
     float q1, q3, iqr;
     float upperBound, lowerBound;

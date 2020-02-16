@@ -10,7 +10,7 @@
 
 static const uint32_t M = 6;
 static const uint32_t N = SAMPLING_RATE * 0.15; // 0.15f;
-static const uint32_t  window_size = SAMPLING_RATE * 0.55; // 0.45 - Works preaty good
+static const uint32_t  window_size = SAMPLING_RATE * 0.55;// 0.45 - Works preaty good
 static const float HP_CONSTANT = ((float)1.0f / (float)M);
 // circular buffer for input ecg signal
 // we need to keep a history of M + 1 samples for HP filter
@@ -44,7 +44,9 @@ static int sample = 0;
 static int last_qrs_point = 0;
 
 static int DELAY_TIME = window_size * 0.5;
+// static int DELAY_TIME = 45;
 
 extern bool HC_Chen_detect(float);
+extern void setDelayTime(int delay);
 
 #endif  //_HC_CHENG_H_

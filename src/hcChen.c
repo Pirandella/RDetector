@@ -101,3 +101,7 @@ bool HC_Chen_detect(float signal){
    }
    return false;
 }
+
+void setDelayTime(int delay){
+    DELAY_TIME = delay;
+}
