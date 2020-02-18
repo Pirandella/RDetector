@@ -70,6 +70,11 @@ int main(int argc, char **argv){
 
         fgets(tmpBuff, 100, ecgFile); // Read table title line
 
+#ifdef LOG
+        // HcChen log file
+        logInit(args->ecgFile);
+#endif
+
         aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
         aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
         printf("\x1B[33mFirst time interval: %02d:%02d:%02d->%02d:%02d:%02d\x1B[0m\n", args->timeCode[i].sh, args->timeCode[i].sm, args->timeCode[i].ss, args->timeCode[i].eh, args->timeCode[i].em, args->timeCode[i].es);
@@ -89,9 +94,15 @@ int main(int argc, char **argv){
                 case 1:
                     peak.index = HC_Chen_detect(ecg->ch0);
                     if(peak.index == 1){
+#ifdef LOG
+                    fprintf(logFile, "1\t%6d\n", globalIndex);
+#endif
                         peak.index = globalIndex;
                         peak.value = ecg->ch0;
                     }else{
+#ifdef LOG
+                        fprintf(logFile, "0\t%6d\n", globalIndex);
+#endif
                         peak.value = 0.0;
                     }
                     break;

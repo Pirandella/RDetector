@@ -79,6 +79,10 @@ bool HC_Chen_detect(float signal){
    if((next_eval_pt > treshold) && !triggered){
        last_qrs_point = sample;
        triggered = true;
+#ifdef LOG
+        fprintf(logFile, "\nsample\tnumber_iter\thp_sum\t\tlp_sum\t\tnext_eval_pt\ttreshold\twin_idx\t\ttriggered\ttrig_time\twin_max\t\tR_Peak\tIndex\n");
+        fprintf(logFile, "%6d\t%6d\t\t%f\t%6.6f\t%f\t%f\t%6d\t\t%6d\t\t%6d\t\t%f\t", sample, number_iter, hp_sum, lp_sum, next_eval_pt, treshold, win_idx, triggered, trig_time, win_max);
+#endif
        return true;
    }
 
@@ -99,9 +103,30 @@ bool HC_Chen_detect(float signal){
       win_idx = 0;
       win_max = -10000000;
    }
+
+#ifdef LOG
+    fprintf(logFile, "\nsample\tnumber_iter\thp_sum\t\tlp_sum\t\tnext_eval_pt\ttreshold\twin_idx\t\ttriggered\ttrig_time\twin_max\t\tR_Peak\tIndex\n");
+    fprintf(logFile, "%6d\t%6d\t\t%f\t%6.6f\t%f\t%f\t%6d\t\t%6d\t\t%6d\t\t%f\t", sample, number_iter, hp_sum, lp_sum, next_eval_pt, treshold, win_idx, triggered, trig_time, win_max);
+#endif
+
    return false;
 }
 
 void setDelayTime(int delay){
     DELAY_TIME = delay;
+}
+
+void logInit(char *dir){
+    char *buffer = malloc(sizeof(char) * 100);
+
+    strncat(buffer, dir, (strrchr(dir, '/') - dir));
+    strcat(buffer, "_LOG_HcChen.txt");
+
+    logFile = fopen(buffer, "w");
+    if(logFile == NULL){
+        perror("Log file:");
+        exit(4);
+    }
+
+    free(buffer);
 }
