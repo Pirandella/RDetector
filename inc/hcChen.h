@@ -9,9 +9,8 @@
 
 #define SAMPLING_RATE   128
 
-#define LOG
-
-FILE *logFile;
+// #define LOG
+// FILE *logFile;
 
 static const uint32_t M = 6;
 static const uint32_t N = SAMPLING_RATE * 0.15; // 0.15f;
@@ -48,10 +47,13 @@ static int number_iter = 0;
 static int sample = 0;
 static int last_qrs_point = 0;
 
-static int DELAY_TIME = window_size * 0.5;
+static int DELAY_TIME = window_size * 0.85;
 
 extern bool HC_Chen_detect(float);
 extern void setDelayTime(int delay);
+#ifdef LOG
 extern void logInit(char *dir);
+extern void logDeinit(void);
+#endif // LOG
 
 #endif  //_HC_CHENG_H_

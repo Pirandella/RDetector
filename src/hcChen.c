@@ -66,10 +66,13 @@ bool HC_Chen_detect(float signal){
    // check if detection hold off period has passed
    if(triggered){
        trig_time++;
-       if(trig_time >= DELAY_TIME){
+       if((trig_time >= DELAY_TIME) && (next_eval_pt <= treshold)){
            triggered = false;
            trig_time = 0;
        }
+       // if(next_eval_pt < treshold){
+       //     triggered = false;
+       // }
    }
 
    // find if we have a new max
@@ -82,7 +85,7 @@ bool HC_Chen_detect(float signal){
 #ifdef LOG
         fprintf(logFile, "\nsample\tnumber_iter\thp_sum\t\tlp_sum\t\tnext_eval_pt\ttreshold\twin_idx\t\ttriggered\ttrig_time\twin_max\t\tR_Peak\tIndex\n");
         fprintf(logFile, "%6d\t%6d\t\t%f\t%6.6f\t%f\t%f\t%6d\t\t%6d\t\t%6d\t\t%f\t", sample, number_iter, hp_sum, lp_sum, next_eval_pt, treshold, win_idx, triggered, trig_time, win_max);
-#endif
+#endif // LOG
        return true;
    }
 
@@ -107,7 +110,7 @@ bool HC_Chen_detect(float signal){
 #ifdef LOG
     fprintf(logFile, "\nsample\tnumber_iter\thp_sum\t\tlp_sum\t\tnext_eval_pt\ttreshold\twin_idx\t\ttriggered\ttrig_time\twin_max\t\tR_Peak\tIndex\n");
     fprintf(logFile, "%6d\t%6d\t\t%f\t%6.6f\t%f\t%f\t%6d\t\t%6d\t\t%6d\t\t%f\t", sample, number_iter, hp_sum, lp_sum, next_eval_pt, treshold, win_idx, triggered, trig_time, win_max);
-#endif
+#endif // LOG
 
    return false;
 }
@@ -116,6 +119,7 @@ void setDelayTime(int delay){
     DELAY_TIME = delay;
 }
 
+#ifdef LOG
 void logInit(char *dir){
     char *buffer = malloc(sizeof(char) * 100);
 
@@ -130,3 +134,8 @@ void logInit(char *dir){
 
     free(buffer);
 }
+
+void logDeinit(){
+    fclose(logFile);
+}
+#endif // LOG

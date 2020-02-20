@@ -71,9 +71,8 @@ int main(int argc, char **argv){
         fgets(tmpBuff, 100, ecgFile); // Read table title line
 
 #ifdef LOG
-        // HcChen log file
         logInit(args->ecgFile);
-#endif
+#endif // LOG
 
         aFibStartTime = (args->timeCode[i].sh * 3600) + (args->timeCode[i].sm * 60) + args->timeCode[i].ss;
         aFibEndTime = (args->timeCode[i].eh * 3600) + (args->timeCode[i].em * 60) + args->timeCode[i].es;
@@ -96,13 +95,13 @@ int main(int argc, char **argv){
                     if(peak.index == 1){
 #ifdef LOG
                     fprintf(logFile, "1\t%6d\n", globalIndex);
-#endif
+#endif // LOG
                         peak.index = globalIndex;
                         peak.value = ecg->ch0;
                     }else{
 #ifdef LOG
                         fprintf(logFile, "0\t%6d\n", globalIndex);
-#endif
+#endif // LOG
                         peak.value = 0.0;
                     }
                     break;
@@ -141,10 +140,10 @@ int main(int argc, char **argv){
 
                 if(rrIndex == DATASET_SIZE){
                     int g = grubbs(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE, 16);
-                    g = grubbs(rrIntervalBuffer, rrTimeBuffer, g, g / 2);
-                    // g = outliner(rrIntervalBuffer, rrTimeBuffer, g);
+                    // g = grubbs(rrIntervalBuffer, rrTimeBuffer, g, g / 2);
+                    g = outliner(rrIntervalBuffer, rrTimeBuffer, g);
                     for(int k = 0; k < g; k++){
-                        if((rrIntervalBuffer[k] > 0.3) && (rrIntervalBuffer[k] < 1.4))
+                        //if((rrIntervalBuffer[k] > 0.3) && (rrIntervalBuffer[k] < 1.4))
                             fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", rrTimeBuffer[k].h, rrTimeBuffer[k].m, rrTimeBuffer[k].s, rrIntervalBuffer[k], aFibKnown);
                     }
                     rrIndex = 0;
@@ -166,6 +165,9 @@ int main(int argc, char **argv){
         fclose(ecgFile);
         fclose(qrsFile);
         fclose(rrFile);
+#ifdef LOG
+        logDeinit();
+#endif // LOG
     }
 
     if(args->flag & CONV_FLAG){
