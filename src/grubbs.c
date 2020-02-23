@@ -57,10 +57,9 @@ int grubbs(float *value, rrTime *time, int n, int k){
         df = n - 1;
         gCrit = (n - 1) * t[df] / sqrt(n * ((n - 1) + pow(t[df], 2)));
 
-        // printf("\nMax: %f\t Min: %f\t maxMean: %f\t minMean: %f\t s: %f\n", max, min, maxMean, minMean, s);
-        // printf("g: %f\t t: %f\tgCrit: %f\t Sig: %d\tOutlier: %f\t N: %d", g, t[df], gCrit, (g > gCrit) ? 1 : 0, max, n);
         // Delete oulier element
-        if(g > gCrit){
+        // if(g > gCrit){
+        if(g > 0.5){
             for(int j = maxIndex; j < n; j++){
                 value[j] = value[j + 1];
                 time[j] = time[j + 1];
@@ -69,11 +68,7 @@ int grubbs(float *value, rrTime *time, int n, int k){
         }
         s = 0;
         sum = 0;
-        // puts(" ");
-        //for(int l = 0; l < n; l++) printf("%f\t", value[l]);
-        // puts(" ");
     }
-    // puts("\n");
     return n;
 }
 
@@ -134,4 +129,21 @@ int outliner(float *value, rrTime *time, int n){
     }
 
     return n;
+}
+
+float movingAvg(float *value){
+    static float win[MOVING_AVG];
+    float sum = 0.0;
+    static int sample = 0;
+
+    if(sample < MOVING_AVG){
+        win[sample] = *value;
+        sample++;
+    }else{
+        for(int i = 0; i < MOVING_AVG; i++) sum += win[i];
+        for(int i = 0; i < MOVING_AVG; i++) win[i] = win[i + 1];
+        win[MOVING_AVG - 1] = *value;
+        return (sum / MOVING_AVG);
+    }
+    return -1000;
 }

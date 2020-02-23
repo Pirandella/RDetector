@@ -9,6 +9,7 @@
 #include "panTompkins.h"
 #include "hcChen.h"
 #include "grubbs.h"
+#include "conf.h"
 
 int main(int argc, char **argv){
 
@@ -28,11 +29,13 @@ int main(int argc, char **argv){
     int i = 0;
     float rr = 0;
     uint8_t firstR = 0;
-    int rrIndex = 0;
     int aFibStartTime = 0;
     int aFibEndTime = 0;
+#ifdef GRUBBS
+    int rrIndex = 0;
     float rrIntervalBuffer[DATASET_SIZE];
     rrTime *rrTimeBuffer = malloc(sizeof(rrTime) * DATASET_SIZE);
+#endif // GRUBBS
 
     FILE *ecgFile;
     FILE *qrsFile;
@@ -94,7 +97,7 @@ int main(int argc, char **argv){
                     peak.index = HC_Chen_detect(ecg->ch0);
                     if(peak.index == 1){
 #ifdef LOG
-                    fprintf(logFile, "1\t%6d\n", globalIndex);
+                        fprintf(logFile, "1\t%6d\n", globalIndex);
 #endif // LOG
                         peak.index = globalIndex;
                         peak.value = ecg->ch0;
@@ -137,10 +140,15 @@ int main(int argc, char **argv){
                 firstR = 1;
                 rr = localIndex * 0.0078125;
                 localIndex = 0;
-
+#ifdef MOVING_AVERAGE
+                float v = movingAvg(&rr);
+                if(v != -1000){
+                    fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, v, aFibKnown);
+                }
+#endif // MOVING_AVERAGE
+#ifdef GRUBBS
                 if(rrIndex == DATASET_SIZE){
                     int g = grubbs(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE, 16);
-                    // g = grubbs(rrIntervalBuffer, rrTimeBuffer, g, g / 2);
                     g = outliner(rrIntervalBuffer, rrTimeBuffer, g);
                     for(int k = 0; k < g; k++){
                         //if((rrIntervalBuffer[k] > 0.3) && (rrIntervalBuffer[k] < 1.4))
@@ -154,8 +162,10 @@ int main(int argc, char **argv){
                         rrTimeBuffer[rrIndex].s = ecg->seconds;
                         rrIndex++;
                 }
-
-                // fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
+#endif // GRUBBS
+#if !defined(GRUBBS) && !defined(MOVING_AVERAGE)
+                fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
+#endif // !GRUBBS && !MOVING_AVERAGE
             }
             fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
             globalIndex++;

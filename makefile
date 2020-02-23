@@ -6,7 +6,7 @@ ODIR := ./obj
 SDIR := ./src
 IDIR := ./inc
 
-_DEPS := argParser.h panTompkins.h hcChen.h struct.h grubbs.h
+_DEPS := argParser.h panTompkins.h hcChen.h struct.h grubbs.h conf.h
 DEPS := $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ := main.o argParser.o panTompkins.o hcChen.o grubbs.o
