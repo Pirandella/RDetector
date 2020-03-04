@@ -11,13 +11,15 @@
 
 #define SAMPLING_RATE   128
 
+#define ADAPTIVE_DELAY_SAMPLES  4
+
 #ifdef LOG
 FILE *logFile;
 #endif // LOG
 
 static const uint32_t M = 6;
 static const uint32_t N = SAMPLING_RATE * 0.15; // 0.15f;
-static const uint32_t  window_size = SAMPLING_RATE * 0.55;// 0.45 - Works preaty good
+static const uint32_t  window_size = SAMPLING_RATE * 0.75;// 0.45 - Works preaty good
 static const float HP_CONSTANT = ((float)1.0f / (float)M);
 // circular buffer for input ecg signal
 // we need to keep a history of M + 1 samples for HP filter
@@ -53,7 +55,7 @@ static int last_qrs_point = 0;
 static int DELAY_TIME = window_size * 0.55;
 
 extern bool HC_Chen_detect(float);
-extern void setDelayTime(int delay);
+extern void adaptiveDelay(float rr);
 
 #ifdef LOG
 extern void logInit(char *dir);

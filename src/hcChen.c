@@ -115,8 +115,19 @@ bool HC_Chen_detect(float signal){
    return false;
 }
 
-void setDelayTime(int delay){
-    DELAY_TIME = delay;
+void adaptiveDelay(float rr){
+    static float rrSum = 0;
+    static int rrIdx = 0;
+
+    rrSum += rr;
+    if(rrIdx < ADAPTIVE_DELAY_SAMPLES){
+        rrIdx++;
+    }else{
+        rrSum /= ADAPTIVE_DELAY_SAMPLES;
+        DELAY_TIME = (rrSum * 0.5) * 100;
+        rrIdx = 0;
+        rrSum = 0;
+    }
 }
 
 #ifdef LOG

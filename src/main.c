@@ -26,6 +26,8 @@ int main(int argc, char **argv){
     int aFibFound = 0;
     int aFibFlag = 0;
 
+
+    int gP = 0;
     int i = 0;
     float rr = 0;
     uint8_t firstR = 0;
@@ -35,6 +37,9 @@ int main(int argc, char **argv){
     int rrIndex = 0;
     float rrIntervalBuffer[DATASET_SIZE];
     rrTime *rrTimeBuffer = malloc(sizeof(rrTime) * DATASET_SIZE);
+#ifdef LABEL
+    signed int rrLabelBuffer[DATASET_SIZE] = {0};
+#endif // LABEL
 #endif // GRUBBS
 
     FILE *ecgFile;
@@ -140,20 +145,28 @@ int main(int argc, char **argv){
                 firstR = 1;
                 rr = localIndex * 0.0078125;
                 localIndex = 0;
+#ifdef ADAPTIVE_DELAY
+                adaptiveDelay(rr);
+#endif // ADAPTIVE_DELAY
 #ifdef MOVING_AVERAGE
                 float v = movingAvg(&rr);
                 if(v != -1000){
-                    fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, v, aFibKnown);
+                    fprintf(rrFile, "%02d:%02d:%09.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, v, aFibKnown);
                 }
 #endif // MOVING_AVERAGE
 #ifdef GRUBBS
                 if(rrIndex == DATASET_SIZE){
-                    int g = grubbs(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE, 16);
-                    g = outliner(rrIntervalBuffer, rrTimeBuffer, g);
-                    for(int k = 0; k < g; k++){
-                        //if((rrIntervalBuffer[k] > 0.3) && (rrIntervalBuffer[k] < 1.4))
-                            fprintf(rrFile, "%02d:%02d:%02f\t%f\t%d\n", rrTimeBuffer[k].h, rrTimeBuffer[k].m, rrTimeBuffer[k].s, rrIntervalBuffer[k], aFibKnown);
-                    }
+#ifdef REJECT
+                    int g = grubbsReject(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE, 2);
+                    // int g = outliner(rrIntervalBuffer, rrTimeBuffer, DATASET_SIZE);
+                    for(int k = 0; k < g; k++)
+                            fprintf(rrFile, "%02d:%02d:%09.6f\t%f\t%d\n", rrTimeBuffer[k].h, rrTimeBuffer[k].m, rrTimeBuffer[k].s, rrIntervalBuffer[k], aFibKnown);
+                    gP += g; // Used to track final number of RR intervals
+#endif // REJECT
+#ifdef LABEL
+                    grubbsLable(rrIntervalBuffer, rrLabelBuffer, DATASET_SIZE);
+                    for(int k = 0; k < DATASET_SIZE; k++) fprintf(rrFile, "%02d:%02d:%09.6f\t%f\t%d\n", rrTimeBuffer[k].h, rrTimeBuffer[k].m, rrTimeBuffer[k].s, rrIntervalBuffer[k], (rrLabelBuffer[k] == -1) ? -1 : aFibKnown);
+#endif //LABEL
                     rrIndex = 0;
                 }else{
                         rrIntervalBuffer[rrIndex] = rr;
@@ -164,13 +177,15 @@ int main(int argc, char **argv){
                 }
 #endif // GRUBBS
 #if !defined(GRUBBS) && !defined(MOVING_AVERAGE)
-                fprintf(rrFile, "%02d:%02d:%2.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
+                fprintf(rrFile, "%02d:%02d:%09.6f\t%f\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, rr, aFibKnown);
 #endif // !GRUBBS && !MOVING_AVERAGE
             }
-            fprintf(qrsFile, "%02d:%02d:%f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
+            fprintf(qrsFile, "%02d:%02d:%09.6f\t%9d\t%4d\t%f\t%f\t%d\t%d\n", ecg->hours, ecg->minutes, ecg->seconds, globalIndex, peak.index ? ++peakCount : 0, peak.value, ecg->ch0, aFibKnown, aFibFound);
             globalIndex++;
             if(firstR) localIndex++;
         }
+
+        printf("Total number of RR intervals: %d\nTotal number of RR after filtering: %d\n", peakCount, gP);
 
         fclose(ecgFile);
         fclose(qrsFile);

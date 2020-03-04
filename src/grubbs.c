@@ -33,8 +33,7 @@ static int _maxIndex(const float value[], int n){
 // float *value - Dataset
 // int n - Number of points in dataset
 // int k - Possible number of outliners in the dataset
-int grubbs(float *value, rrTime *time, int n, int k){
-
+int grubbsReject(float *value, rrTime *time, int n, int k){
     float sum = 0.0, mean = 0.0, s = 0.0;
     float max, min, maxMean, minMean;
     float g, gCrit;
@@ -58,8 +57,7 @@ int grubbs(float *value, rrTime *time, int n, int k){
         gCrit = (n - 1) * t[df] / sqrt(n * ((n - 1) + pow(t[df], 2)));
 
         // Delete oulier element
-        // if(g > gCrit){
-        if(g > 0.5){
+        if(g > gCrit){
             for(int j = maxIndex; j < n; j++){
                 value[j] = value[j + 1];
                 time[j] = time[j + 1];
@@ -70,6 +68,28 @@ int grubbs(float *value, rrTime *time, int n, int k){
         sum = 0;
     }
     return n;
+}
+
+void grubbsLable(float *value, signed int *label, int n){
+    float sum = 0.0, mean = 0.0, s = 0.0;
+    float g, gCrit;
+
+    int i, df;
+    int p;
+
+    for(p = 0; p < n; p++) sum += value[p];
+    mean = sum / n;
+    for(p = 0; p < n; p++) s += (value[p] - mean) * (value[p] - mean);
+    s = sqrt(s / (n - 1));
+
+    df = n - 1;
+    gCrit = (n - 1) * t[df] / sqrt(n * ((n - 1) + pow(t[df], 2)));
+
+    for(i = 0; i < n; i++){
+        g = ((mean < value[i]) ? (value[i] - mean) : (mean - value[i])) / s;
+        if(g > gCrit) label[i] = -1;
+        else label[i] = 0;
+    }
 }
 
 //---------------- Sorting function --------------------------------------------
